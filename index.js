@@ -8,7 +8,7 @@ const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const ejs = require('ejs');
 const { sendEmail, sendTestEmail, getProviders } = require('./services/emailService');
-const { saveSubscriber, unsubscribe, getSubscribers, getSubscriberLists, createList, trackOpen } = require('./services/subscriberService');
+const { saveSubscriber, unsubscribe, getSubscribers, getSubscriberLists, createList, trackOpen, getSubscriberById, updateSubscriber, deleteSubscriber } = require('./services/subscriberService');
 const { loadConfig, updateConfig } = require('./services/configService');
 
 const app = express();
@@ -51,6 +51,89 @@ app.get('/api/lists', async (req, res) => {
   }
 });
 
+// Ruta para obtener suscriptores de una lista
+app.get('/api/lists/:listId/subscribers', async (req, res) => {
+  try {
+    const { listId } = req.params;
+    const subscribers = await getSubscribers(listId);
+    res.json({ success: true, subscribers });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Ruta para obtener un suscriptor específico
+app.get('/api/subscribers/:subscriberId', async (req, res) => {
+  try {
+    const { subscriberId } = req.params;
+    const subscriber = await getSubscriberById(subscriberId);
+    if (!subscriber) {
+      return res.status(404).json({ success: false, message: 'Suscriptor no encontrado' });
+    }
+    res.json({ success: true, subscriber });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Ruta para crear un nuevo suscriptor
+app.post('/api/lists/:listId/subscribers', async (req, res) => {
+  try {
+    const { listId } = req.params;
+    const { email, name, customFields } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'El email es obligatorio' });
+    }
+    
+    const subscriber = {
+      email,
+      name: name || '',
+      listId,
+      customFields: customFields || {}
+    };
+    
+    const savedSubscriber = await saveSubscriber(subscriber);
+    res.json({ success: true, subscriber: savedSubscriber });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Ruta para actualizar un suscriptor
+app.put('/api/subscribers/:subscriberId', async (req, res) => {
+  try {
+    const { subscriberId } = req.params;
+    const { email, name, customFields } = req.body;
+    
+    const updatedSubscriber = await updateSubscriber(subscriberId, {
+      email,
+      name,
+      customFields
+    });
+    
+    res.json({ success: true, subscriber: updatedSubscriber });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Ruta para eliminar un suscriptor
+app.delete('/api/subscribers/:subscriberId', async (req, res) => {
+  try {
+    const { subscriberId } = req.params;
+    const result = await deleteSubscriber(subscriberId);
+    
+    if (result) {
+      res.json({ success: true, message: 'Suscriptor eliminado correctamente' });
+    } else {
+      res.status(404).json({ success: false, message: 'Suscriptor no encontrado' });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // Ruta para obtener proveedores de email
 app.get('/api/providers', async (req, res) => {
   try {
@@ -72,27 +155,56 @@ app.post('/api/import-csv', upload.single('csvFile'), async (req, res) => {
     const listId = await createList(listName);
     const results = [];
     const errors = [];
-
+    
+    // Detectar automáticamente la columna de emails
+    let emailColumnName = null;
+    let firstRow = null;
+    
     fs.createReadStream(req.file.path)
       .pipe(csv())
       .on('data', async (data) => {
         try {
-          // Asumimos que el CSV tiene al menos una columna 'email'
-          if (data.email) {
+          // Si es la primera fila, detectar la columna de email
+          if (!firstRow) {
+            firstRow = data;
+            // Buscar columna que contenga email (ignorando mayúsculas/minúsculas)
+            emailColumnName = Object.keys(data).find(key => 
+              key.toLowerCase().includes('email') || 
+              key.toLowerCase().includes('correo') ||
+              key.toLowerCase().includes('e-mail')
+            );
+            
+            // Si no se encuentra, buscar cualquier columna que parezca contener un email
+            if (!emailColumnName) {
+              emailColumnName = Object.keys(data).find(key => {
+                const value = data[key];
+                return typeof value === 'string' && value.includes('@') && value.includes('.');
+              });
+            }
+            
+            // Si aún no se encuentra, usar la primera columna
+            if (!emailColumnName && Object.keys(data).length > 0) {
+              emailColumnName = Object.keys(data)[0];
+            }
+          }
+          
+          // Verificar si hay un email válido en la columna detectada
+          if (emailColumnName && data[emailColumnName] && data[emailColumnName].includes('@')) {
             const subscriber = {
-              email: data.email,
-              name: data.name || '',
+              email: data[emailColumnName],
+              name: data.name || data.nombre || '',
               listId: listId,
               customFields: { ...data }
             };
-            delete subscriber.customFields.email;
-            delete subscriber.customFields.name;
+            delete subscriber.customFields[emailColumnName];
+            if (subscriber.customFields.name) delete subscriber.customFields.name;
+            if (subscriber.customFields.nombre) delete subscriber.customFields.nombre;
             
             await saveSubscriber(subscriber);
             results.push(subscriber);
           }
         } catch (err) {
-          errors.push({ email: data.email, error: err.message });
+          errors.push({ email: data[emailColumnName] || 'Desconocido', error: err.message });
         }
       })
       .on('end', () => {

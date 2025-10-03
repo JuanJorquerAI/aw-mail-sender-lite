@@ -70,6 +70,31 @@ async function getSubscribers(listId) {
   return await Subscriber.find({ listId, active: true });
 }
 
+async function getSubscriberById(subscriberId) {
+  return await Subscriber.findById(subscriberId);
+}
+
+async function updateSubscriber(subscriberId, data) {
+  const subscriber = await Subscriber.findById(subscriberId);
+  
+  if (!subscriber) {
+    throw new Error('Suscriptor no encontrado');
+  }
+  
+  // Actualizar campos
+  if (data.email) subscriber.email = data.email;
+  if (data.name) subscriber.name = data.name;
+  if (data.customFields) subscriber.customFields = data.customFields;
+  
+  await subscriber.save();
+  return subscriber;
+}
+
+async function deleteSubscriber(subscriberId) {
+  const result = await Subscriber.deleteOne({ _id: subscriberId });
+  return result.deletedCount > 0;
+}
+
 async function unsubscribe(subscriberId, email) {
   const subscriber = await Subscriber.findById(subscriberId);
   
@@ -108,6 +133,9 @@ module.exports = {
   getSubscriberLists,
   saveSubscriber,
   getSubscribers,
+  getSubscriberById,
+  updateSubscriber,
+  deleteSubscriber,
   unsubscribe,
   trackOpen,
   getStats
