@@ -20,12 +20,14 @@ Aplicación de envío de correos electrónicos con múltiples proveedores y segu
 ## Instalación
 
 1. Clona el repositorio:
+
    ```
    git clone https://github.com/juanitodelrock/aw-mail-sender-lite.git
    cd aw-mail-sender-lite
    ```
 
 2. Instala las dependencias:
+
    ```
    npm install
    ```
@@ -41,6 +43,7 @@ Aplicación de envío de correos electrónicos con múltiples proveedores y segu
 ### AWS SES
 
 Para utilizar AWS SES, necesitas configurar:
+
 - AWS Access Key ID
 - AWS Secret Access Key
 - AWS Region
@@ -48,16 +51,19 @@ Para utilizar AWS SES, necesitas configurar:
 ### SendGrid
 
 Para utilizar SendGrid, necesitas configurar:
+
 - API Key de SendGrid
 
 ## Uso
 
 1. Inicia la aplicación:
+
    ```
    npm run dev
    ```
 
 2. Accede a la aplicación en tu navegador:
+
    ```
    http://localhost:3000
    ```
