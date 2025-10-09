@@ -89,6 +89,60 @@ aw-mail-sender-lite/
 └── package.json      # Dependencias y scripts
 ```
 
+## Nueva estructura
+
+```
+src/
+  app.ts
+  server.ts
+  config/env.ts
+  routes/
+    index.ts
+    campaigns.routes.ts
+    lists.routes.ts
+    subscribers.routes.ts
+    settings.routes.ts
+    tracking.routes.ts
+    webhooks.routes.ts
+  controllers/
+    campaigns.controller.ts
+    lists.controller.ts
+    subscribers.controller.ts
+    settings.controller.ts
+    tracking.controller.ts
+    webhooks/
+      sendgrid.controller.ts
+      ses.controller.ts
+  services/
+    campaign.service.ts
+    subscriber.service.ts
+    settings.service.ts
+  providers/email/
+    IEmailProvider.ts
+    ses.provider.ts
+    sendgrid.provider.ts
+  models/
+    List.ts
+    Subscriber.ts
+    Campaign.ts
+    Event.ts
+    Suppression.ts
+  middlewares/
+    validate.ts          // zod validator
+    error.ts             // error handler
+    auth.ts              // (stub) para futura auth
+    requestId.ts         // opcional
+  jobs/
+    email.queue.ts
+  workers/
+    email.worker.ts
+  utils/
+    html.ts              // inyección pixel / reescritura links
+    email-headers.ts     // List-Unsubscribe
+  views/
+  public/
+```
+
 ## Licencia
 
 MIT
