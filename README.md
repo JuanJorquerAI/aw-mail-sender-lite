@@ -139,8 +139,9 @@ src/
   utils/
     html.ts              // inyección pixel / reescritura links
     email-headers.ts     // List-Unsubscribe
-  views/
-  public/
+views/
+uploads/
+public/
 ```
 
 ## Licencia

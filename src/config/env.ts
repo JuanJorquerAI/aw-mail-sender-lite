@@ -1,4 +1,3 @@
-// config/env.js
 import 'dotenv-safe/config';
 import { z } from 'zod';
 
@@ -9,8 +8,8 @@ const EnvSchema = z.object({
 
   MONGO_URI: z.string().min(1),
 
-  SEND_FROM: z.string().email().optional(),
-  BASE_URL: z.string().url().default('http://localhost:3000'),
+  SEND_FROM: z.email().optional(),
+  BASE_URL: z.url().default('http://localhost:3000'),
 
   AWS_REGION: z.string().optional(),
   AWS_ACCESS_KEY_ID: z.string().optional(),
