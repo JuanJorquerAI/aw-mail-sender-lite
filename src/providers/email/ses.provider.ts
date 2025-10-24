@@ -12,7 +12,7 @@ const transport = nodemailer.createTransport({
 export default class SesProvider implements IEmailProvider {
   async send(p: EmailPayload): Promise<void> {
     await transport.sendMail({
-      to: Array.isArray(p.to) ? p.to : p.to, // nodemailer acepta string o array
+      to: p.to,
       from: p.from,
       subject: p.subject,
       html: p.html,

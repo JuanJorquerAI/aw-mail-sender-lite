@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import pinoHttp from 'pino-http';
+import router from './routes/index.js';
 
 import env from './config/env.js';
 import errorMiddleware from './middlewares/error.js';
@@ -48,6 +49,8 @@ app.get('/', (_req, res) => {
 app.get('/health', (_req, res) => {
   res.json({ ok: true, env: env.NODE_ENV, time: new Date().toISOString() });
 });
+
+app.use('/', router);
 
 // Manejador centralizado de errores
 app.use(errorMiddleware);
